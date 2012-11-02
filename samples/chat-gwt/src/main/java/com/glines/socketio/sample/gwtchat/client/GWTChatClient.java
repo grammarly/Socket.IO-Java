@@ -89,7 +89,7 @@ public class GWTChatClient implements EntryPoint, SocketIOConnectionListener {
 		btnSubmit.setHeight("30");
 		submitPanel.add(btnSubmit);
 		
-		socket = GWTSocketIOConnectionFactory.INSTANCE.create(this, null, (short)0);
+		socket = GWTSocketIOConnectionFactory.INSTANCE.create(this, "", (short)0);
 		socket.connect();
 	}
 	
@@ -117,12 +117,17 @@ public class GWTChatClient implements EntryPoint, SocketIOConnectionListener {
 			} catch (SocketIOException e) {
 				// Ignore. This wwon't happen in the GWT version.
 			}
-		}
+		} 
 	}
 
 	@Override
 	public void onConnect() {
 		htmlPanel.setHTML("");
+		try {
+			socket.sendMessage("client: hello");
+		} catch (SocketIOException e) {
+			// Ignore. This wwon't happen in the GWT version.
+		}
 		submitPanel.setVisible(true);
 	}
 
@@ -134,7 +139,7 @@ public class GWTChatClient implements EntryPoint, SocketIOConnectionListener {
 		} else {
 			addLine("<b>Disconnected["+reason+"]</b>");
 		}
-	}
+	} 
 
 	private void onMessage(JSONObject obj) {
 		if (obj.containsKey("welcome")) {
@@ -149,11 +154,18 @@ public class GWTChatClient implements EntryPoint, SocketIOConnectionListener {
 			}
 		} else if (obj.containsKey("message")) {
 			JSONArray arr = obj.get("message").isArray();
-			if (arr != null && arr.size() >= 2) {
-				JSONString id = arr.get(0).isString();
-				JSONString msg = arr.get(1).isString();
-				if (id != null && msg != null) {
-					addLine("<b>" + id.stringValue() + ":</b> " + msg.stringValue());
+			if (arr != null){
+				if(arr.size() >= 2) {
+					JSONString id = arr.get(0).isString();
+					JSONString msg = arr.get(1).isString(); 
+					if (id != null && msg != null) {
+						addLine("<b>" + id.stringValue() + ":</b> " + msg.stringValue());
+					}
+				}
+			}else{
+				JSONString str = obj.get("message").isString();
+				if (str != null) {
+					addLine("<b>Server:</b> " + str.stringValue());
 				}
 			}
 		}

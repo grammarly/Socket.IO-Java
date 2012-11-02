@@ -41,6 +41,7 @@ import java.io.OutputStream;
 
 public class GWTChatServer {
 	private static class StaticServlet extends HttpServlet {
+		private static final long serialVersionUID = -5523626683621615592L;
 		@Override
 		protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 				throws ServletException, IOException {

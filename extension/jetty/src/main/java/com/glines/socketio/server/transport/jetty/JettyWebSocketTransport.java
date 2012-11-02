@@ -36,8 +36,6 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketFactory;
 import org.eclipse.jetty.websocket.WebSocketFactory.Acceptor;
 
-import com.glines.socketio.util.Web;
-
 public final class JettyWebSocketTransport extends AbstractTransport {
 
     private static final Logger LOGGER = Logger.getLogger(JettyWebSocketTransport.class.getName());
@@ -58,6 +56,7 @@ public final class JettyWebSocketTransport extends AbstractTransport {
     public void init() throws TransportInitializationException {
         wsFactory.setBufferSize(getConfig().getBufferSize());
         wsFactory.setMaxIdleTime(getConfig().getMaxIdle());
+
         if (LOGGER.isLoggable(Level.FINE))
             LOGGER.fine(getType() + " configuration:\n" +
                     " - bufferSize=" + wsFactory.getBufferSize() + "\n" +
@@ -117,14 +116,14 @@ public final class JettyWebSocketTransport extends AbstractTransport {
                     session = sessionFactory.createSession(inbound, sessionId);
                     handler = newHandler(WebSocket.class, session);
                     handler.init(getConfig());
-                    handler.onConnect();
+                    //handler.onConnect();
                 } else {
                     handler = session.getTransportHandler();
                 }
 
                 wsFactory.upgrade(request, response, WebSocket.class.cast(handler), protocol);
-
                 handler.sendMessage(new SocketIOFrame(SocketIOFrame.FrameType.CONNECT, SocketIOFrame.TEXT_MESSAGE_TYPE, ""));
+                handler.onConnect();
             }
         } else {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, this + " transport error: Invalid request");

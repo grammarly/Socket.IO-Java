@@ -34,33 +34,42 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class GWTSocketIOConnectionImpl implements SocketIOConnection {
 	private static final class SocketIOImpl extends JavaScriptObject {
 		public static native SocketIOImpl create(GWTSocketIOConnectionImpl impl, String host, String port) /*-{
-			var socket = new $wnd.io.Socket(host, port != null ? {port: port} : {});
+			var socket = $wnd.io.connect('http://'+host+':'+port,{rememberTransport: false, transports:["websocket"]});
 			socket.on('connect', $entry(function() {
       			impl.@com.glines.socketio.client.gwt.GWTSocketIOConnectionImpl::onConnect()();
     		}));
-			socket.on('message', $entry(function(messageType, message) {
-      			impl.@com.glines.socketio.client.gwt.GWTSocketIOConnectionImpl::onMessage(ILjava/lang/String;)(messageType, message);
+			socket.on('message', $entry(function(msg) {
+				impl.@com.glines.socketio.client.gwt.GWTSocketIOConnectionImpl::onMessage(ILjava/lang/String;)(1, $wnd.io.JSON.stringify(msg));
     		}));
 			socket.on('disconnect', $entry(function(dr, message) {
       			impl.@com.glines.socketio.client.gwt.GWTSocketIOConnectionImpl::onDisconnect(ILjava/lang/String;)(dr, message);
     		}));
-    		return socket;
+			return socket;
 		}-*/;
 
 		protected SocketIOImpl() {
 	    }
 
-	    public native int getSocketState() /*-{return this.socketState;}-*/;
+	    public native int getSocketState() /*-{ ;
+	    	if(this.socket.connecting){
+	    		return 0;
+	    	}else if(this.socket.connected){
+	    		return 1;
+	    	}else{
+	    		return 3;
+	    	}
+	    }-*/;
 
-	    public native void connect() /*-{this.connect();}-*/;
+	    public native void connect() /*-{this.socket.connect();}-*/;
 
 	    public native void close() /*-{this.close();}-*/;
 
-	    public native void disconnect() /*-{this.disconnect();}-*/;
+	    public native void disconnect() /*-{this.socket.disconnect();}-*/;
 
-	    public native void send(int messageType, String data) /*-{this.send(messageType, data);}-*/;
+	    public native void send(int messageType, String data) /*-{
+			this.socket.transport.send("3:1::"+data);
+	    }-*/;
 	}
-	
 	
 	private final SocketIOConnectionListener listener;
 	private final String host;
@@ -70,11 +79,15 @@ public class GWTSocketIOConnectionImpl implements SocketIOConnection {
 	GWTSocketIOConnectionImpl(SocketIOConnectionListener listener,
 			String host, short port) {
 		this.listener = listener;
-		this.host = host;
+		if (host.length() > 0) {
+			this.host = host;
+		}else{
+			this.host = "localhost";
+		}
 		if (port > 0) {
 			this.port = "" + port;
 		} else {
-			this.port = null;
+			this.port = "8080";
 		}
 	}
 
@@ -144,5 +157,4 @@ public class GWTSocketIOConnectionImpl implements SocketIOConnection {
 	private void onMessage(int messageType, String message) {
 		listener.onMessage(messageType, message);
 	}
-	
 }
